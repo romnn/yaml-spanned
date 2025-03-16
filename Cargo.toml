@@ -1,0 +1,32 @@
+[package]
+name = "yaml-spanned"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
+
+[dependencies]
+thiserror = "2"
+
+# parsing
+indexmap = "2"
+itoa = "1"
+ryu = "1"
+libyaml-safer = "0"
+
+# error reporting
+codespan-reporting = "0"
+
+# find duplicates
+itertools = "0"
+
+# optional
+serde = { version = "1", features = ["derive"], optional = true }
+
+[dev-dependencies]
+color-eyre = "0"
+similar-asserts = "1"
+serde_yaml = "0"
+indoc = "2"
