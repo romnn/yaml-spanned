@@ -1,9 +1,5 @@
 use crate::value::Value;
-
 use codespan_reporting::diagnostic::{Diagnostic, Label};
-use codespan_reporting::files::SimpleFile;
-use codespan_reporting::term::termcolor::StandardStream;
-use codespan_reporting::term::{self, ColorArg};
 
 pub type ErrorSpan = std::ops::Range<usize>;
 
@@ -21,14 +17,15 @@ pub struct InvalidKeyError {
 
 impl ToDiagnostics for InvalidKeyError {
     fn to_diagnostics<F: Copy + PartialEq>(&self, file_id: F) -> Vec<Diagnostic<F>> {
-        vec![Diagnostic::error()
-            // .with_code("E0308")
-            .with_message("invalid key")
-            .with_labels(vec![Label::primary(file_id, self.span.clone())
-                .with_message(format!(
-                    "Expected `String`, found: `{:?}`",
-                    self.value
-                ))])]
+        vec![
+            Diagnostic::error()
+                // .with_code("E0308")
+                .with_message("invalid key")
+                .with_labels(vec![
+                    Label::primary(file_id, self.span.clone())
+                        .with_message(format!("Expected `String`, found: `{:?}`", self.value)),
+                ]),
+        ]
     }
 }
 
@@ -63,10 +60,12 @@ impl ToDiagnostics for DuplicateKeyError {
         let primary_label =
             Label::primary(file_id, span.clone()).with_message("cannot set the same key twice");
 
-        vec![Diagnostic::error()
-            // .with_code("E0384")
-            .with_message(format!("duplicate key `{}.{}`", self.path, self.key))
-            .with_labels(vec![secondary_label, primary_label])]
+        vec![
+            Diagnostic::error()
+                // .with_code("E0384")
+                .with_message(format!("duplicate key `{}.{}`", self.path, self.key))
+                .with_labels(vec![secondary_label, primary_label]),
+        ]
     }
 }
 
@@ -117,7 +116,8 @@ impl ToDiagnostics for Error {
         match self {
             Self::YAML(err) => err.to_diagnostics(file_id),
             Self::LimitExceeded(_) => vec![],
-            Self::Serde(err) => vec![],
+            #[cfg(feature = "serde")]
+            Self::Serde(_) => vec![],
             Self::Parse(errs) => errs
                 .iter()
                 .flat_map(|err| err.to_diagnostics(file_id))
@@ -182,9 +182,11 @@ impl ToDiagnostics for libyaml_safer::Error {
             labels.push(Label::primary(file_id.clone(), index..index).with_message(self.problem()))
         }
 
-        vec![Diagnostic::error()
-            .with_message(self.problem())
-            .with_labels(labels)]
+        vec![
+            Diagnostic::error()
+                .with_message(self.problem())
+                .with_labels(labels),
+        ]
     }
 }
 
@@ -251,18 +253,22 @@ impl std::fmt::Display for InvalidNumberErrorWithSpan {
 
 impl ToDiagnostics for InvalidNumberErrorWithSpan {
     fn to_diagnostics<F: Copy + PartialEq>(&self, file_id: F) -> Vec<Diagnostic<F>> {
-        let labels = vec![Label::primary(file_id, self.span.clone())
-            .with_message(format!("failed to parse: {:?}", self.source))];
-        vec![Diagnostic::error()
-            // .with_code("E0308")
-            .with_message("invalid number")
-            .with_labels(labels)]
+        let labels = vec![
+            Label::primary(file_id, self.span.clone())
+                .with_message(format!("failed to parse: {:?}", self.source)),
+        ];
+        vec![
+            Diagnostic::error()
+                // .with_code("E0308")
+                .with_message("invalid number")
+                .with_labels(labels),
+        ]
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Error, Mapping, Sequence, Tag, TaggedValue, Value};
+    use crate::{Mapping, Value};
     use color_eyre::eyre;
     use indoc::indoc;
     use similar_asserts::assert_eq as sim_assert_eq;
@@ -301,10 +307,13 @@ mod tests {
         let value = crate::from_str(yaml)?;
         let expected = r#"invalid type: string "str", expected i16"#; // at line 2 column 1";
 
-        sim_assert_eq!(
-            crate::from_value::<i16>(&value).unwrap_err().to_string(),
-            expected
-        );
+        #[cfg(feature = "serde")]
+        {
+            sim_assert_eq!(
+                crate::from_value::<i16>(&value).unwrap_err().to_string(),
+                expected
+            );
+        }
         Ok(())
     }
 
@@ -446,7 +455,7 @@ mod tests {
     fn test_second_document_syntax_error() -> eyre::Result<()> {
         crate::tests::init();
 
-        let mut yaml = indoc! {"
+        let yaml = indoc! {"
             ---
             0
             ---
@@ -457,7 +466,7 @@ mod tests {
         let mut documents = crate::from_str_lossy_iter(&mut test);
 
         // first document
-        let (value, errors) = documents.next().unwrap().unwrap();
+        let (value, _errors) = documents.next().unwrap().unwrap();
         let expected: Value = 0.into();
         sim_assert_eq!(value.cleared_spans().into_inner(), expected);
 
@@ -865,6 +874,7 @@ mod tests {
         pub fn errors(&self) -> Vec<String> {
             match self {
                 Self::YAML(err) => vec![err.to_string()],
+                #[cfg(feature = "serde")]
                 Self::Serde(err) => vec![err.to_string()],
                 Self::LimitExceeded(err) => vec![err.to_string()],
                 Self::Parse(errors) => errors.into_iter().map(|err| err.to_string()).collect(),

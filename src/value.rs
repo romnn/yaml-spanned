@@ -1,19 +1,10 @@
-use crate::error::{
-    DuplicateKeyError, ErrorSpan, InvalidKeyError, InvalidNumberErrorWithSpan, LimitExceeded,
-    ParseError,
-};
+use crate::error::{DuplicateKeyError, ErrorSpan, LimitExceeded, ParseError};
 use crate::mapping::Mapping;
 use crate::number::Number;
-use crate::spanned::{Marker, Span, Spanned};
+use crate::spanned::{Span, Spanned};
 use crate::tag::{Tag, TaggedValue};
-
-use codespan_reporting::diagnostic::{Diagnostic, Label};
-use codespan_reporting::files::SimpleFile;
-use codespan_reporting::term::termcolor::StandardStream;
-use codespan_reporting::term::{self, ColorArg};
 use indexmap::IndexMap;
 use itertools::Itertools;
-use libyaml_safer::ScalarStyle;
 
 #[inline]
 fn parse_null(scalar: &[u8]) -> Option<()> {
@@ -208,10 +199,10 @@ impl Value {
 
     #[inline]
     pub fn get_or_null<I: crate::mapping::Index>(&self, index: I) -> &Spanned<Value> {
-        static null: Spanned<Value> = Spanned::dummy(Value::Null);
+        static NULL: Spanned<Value> = Spanned::dummy(Value::Null);
         self.as_mapping()
             .and_then(|map| map.get(index))
-            .unwrap_or(&null)
+            .unwrap_or(&NULL)
     }
 
     #[inline]
@@ -548,12 +539,12 @@ trait ToValue {
 
 #[inline]
 fn scalar_node_to_value_guess_type(
-    node: &libyaml_safer::Node,
-    path: &str,
+    // node: &libyaml_safer::Node,
+    // path: &str,
     value: &str,
     style: &libyaml_safer::ScalarStyle,
-    document: &libyaml_safer::Document,
-    errors: &mut Vec<ParseError>,
+    // document: &libyaml_safer::Document,
+    // errors: &mut Vec<ParseError>,
 ) -> Value {
     match style {
         // ':'  => ScalarStyle::Plain,
@@ -609,11 +600,11 @@ impl SpannedNode for &libyaml_safer::Document {
 #[inline]
 fn scalar_node_to_value(
     node: &libyaml_safer::Node,
-    path: &str,
+    // path: &str,
     value: &str,
     style: &libyaml_safer::ScalarStyle,
-    document: &libyaml_safer::Document,
-    errors: &mut Vec<ParseError>,
+    // document: &libyaml_safer::Document,
+    // errors: &mut Vec<ParseError>,
 ) -> Spanned<Value> {
     match node.tag.as_deref() {
         Some("tag:yaml.org,2002:int") => {
@@ -625,7 +616,8 @@ fn scalar_node_to_value(
             // autodetect
         }
     }
-    let value = scalar_node_to_value_guess_type(node, path, value, style, document, errors);
+    // let value = scalar_node_to_value_guess_type(node, path, value, style, document, errors);
+    let value = scalar_node_to_value_guess_type(value, style);
     Spanned::new(node.span(), value)
 }
 
@@ -634,7 +626,7 @@ fn mapping_node_to_value(
     node: &libyaml_safer::Node,
     path: &str,
     pairs: &[libyaml_safer::NodePair],
-    style: &libyaml_safer::MappingStyle,
+    // style: &libyaml_safer::MappingStyle,
     document: &libyaml_safer::Document,
     errors: &mut Vec<ParseError>,
     recursion_limit: usize,
@@ -702,7 +694,7 @@ fn sequence_node_to_value(
     node: &libyaml_safer::Node,
     path: &str,
     items: &[i32],
-    style: &libyaml_safer::SequenceStyle,
+    // style: &libyaml_safer::SequenceStyle,
     document: &libyaml_safer::Document,
     errors: &mut Vec<ParseError>,
     recursion_limit: usize,
@@ -745,23 +737,24 @@ impl ToValue for libyaml_safer::Node {
         let value = match &self.data {
             libyaml_safer::NodeData::NoNode => Ok(Spanned::new(self.span(), Value::Null)),
             libyaml_safer::NodeData::Scalar { value, style } => Ok(scalar_node_to_value(
-                self, path, value, style, document, errors,
+                // self, path, value, style, document, errors,
+                self, value, style,
             )),
-            libyaml_safer::NodeData::Mapping { pairs, style } => mapping_node_to_value(
+            libyaml_safer::NodeData::Mapping { pairs, .. } => mapping_node_to_value(
                 self,
                 path,
                 pairs,
-                style,
+                // style,
                 document,
                 errors,
                 recursion_limit.saturating_sub(1),
                 jump_limit,
             ),
-            libyaml_safer::NodeData::Sequence { items, style } => sequence_node_to_value(
+            libyaml_safer::NodeData::Sequence { items, .. } => sequence_node_to_value(
                 self,
                 path,
                 items,
-                style,
+                // style,
                 document,
                 errors,
                 recursion_limit.saturating_sub(1),
@@ -845,7 +838,7 @@ impl<'de> serde::de::IntoDeserializer<'de, crate::error::SerdeError> for Value {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Mapping, Sequence, Tag, TaggedValue, Value};
+    use crate::{Mapping, Sequence, TaggedValue, Value};
     use color_eyre::eyre;
     use indoc::indoc;
     use similar_asserts::assert_eq as sim_assert_eq;
@@ -876,7 +869,7 @@ mod tests {
                 tilde: String,
             }
 
-            let expected = Struct {
+            let _expected = Struct {
                 empty: String::new(),
                 tilde: "~".to_owned(),
             };
@@ -982,7 +975,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let expected = vec![Enum::String(String::new())];
+            let _expected = vec![Enum::String(String::new())];
             // TODO: allow parsing empty string from Value::Null
             // sim_assert_eq!(crate::from_value::<Vec<Enum>>(value)?, expected);
         }
@@ -1214,7 +1207,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let expected = vec!["plain nonàscii", "single quoted", "double quoted"];
+            let _expected = vec!["plain nonàscii", "single quoted", "double quoted"];
             // TODO: cannot deserialize borrowed as we first allocate value
             // sim_assert_eq!(crate::from_value::<Vec<&str>>(value)?, expected);
         }
@@ -1323,7 +1316,7 @@ mod tests {
         let display = format!("{value}");
         println!("{display}");
 
-        let expected = indoc! {r#"
+        let _expected = indoc! {r#"
             Mapping {
                 "Null": Null,
                 "Bool": Bool(true),

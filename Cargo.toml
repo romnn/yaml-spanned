@@ -1,11 +1,34 @@
 [package]
 name = "yaml-spanned"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
+authors = ["romnn <contact@romnn.com>"]
+description = "YAML parser that captures detailed span information."
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/romnn/yaml-spanned"
+repository = "https://github.com/romnn/yaml-spanned"
+categories = ["encoding", "parser-implementations"]
+keywords = [
+	"yaml",
+	"serde",
+	"parser",
+	"deserialization",
+	"spans",
+]
+exclude = [
+	".typos.toml",
+	".ignore",
+	".bumpversion.toml",
+	"taskfile.yaml",
+]
 
 [features]
 default = ["serde"]
 serde = ["dep:serde"]
+
+[package.metadata.cargo-feature-combinations]
+denylist = ["default"]
 
 [dependencies]
 thiserror = "2"

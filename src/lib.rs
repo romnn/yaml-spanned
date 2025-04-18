@@ -1,4 +1,4 @@
-#![allow(warnings)]
+// #![allow(warnings)]
 
 #[cfg(feature = "serde")]
 pub mod de;
@@ -26,7 +26,7 @@ pub use value::{Builder, Sequence, Value};
 
 pub type SpannedValue = Spanned<Value>;
 
-struct LossyDocumentDeserializer<'a> {
+pub struct LossyDocumentDeserializer<'a> {
     builder: Builder,
     parser: libyaml_safer::Parser<'a>,
 }
@@ -37,8 +37,7 @@ impl<'a> LossyDocumentDeserializer<'a> {
         parser.set_input_string(value);
 
         let builder = Builder::default();
-        let mut this = Self { parser, builder };
-        this
+        Self { parser, builder }
     }
 }
 

@@ -1,6 +1,4 @@
 use crate::error::SerdeError;
-use crate::tag::serde::{check_for_tag, MaybeTag};
-use crate::{to_value, Mapping, Number, Sequence, Spanned, Tag, TaggedValue, Value};
 
 type Result<T, E = SerdeError> = std::result::Result<T, E>;
 
@@ -35,8 +33,8 @@ type Result<T, E = SerdeError> = std::result::Result<T, E>;
 pub mod value {
     use super::Result;
     use crate::error::SerdeError;
-    use crate::tag::serde::{check_for_tag, MaybeTag};
-    use crate::{to_value, Mapping, Number, Sequence, Spanned, Tag, TaggedValue, Value};
+    use crate::tag::serde::{MaybeTag, check_for_tag};
+    use crate::{Mapping, Number, Sequence, Spanned, Tag, TaggedValue, Value, to_value};
 
     impl serde::Serialize for Spanned<Value> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -898,7 +896,7 @@ pub mod value {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Error, Mapping, Sequence, SpannedValue, Tag, TaggedValue, Value};
+    use crate::{Mapping, Sequence, SpannedValue, TaggedValue, Value};
     use color_eyre::eyre;
     use indoc::indoc;
     use similar_asserts::assert_eq as sim_assert_eq;

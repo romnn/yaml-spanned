@@ -1,8 +1,4 @@
-// use crate::de;
 use crate::error::InvalidNumberError;
-// use crate::error::{self, Error, ErrorImpl};
-// use serde::de::{Unexpected, Visitor};
-// use serde::{forward_to_deserialize_any, Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 
 /// Represents a YAML number, whether integer or floating point.
@@ -404,81 +400,80 @@ fn parse_unsigned_int<T>(
     // return Ok(Some(int));
 }
 
-#[inline]
-fn parse_signed_int<T>(
-    scalar: &str,
-    from_str_radix: fn(&str, radix: u32) -> Result<T, std::num::ParseIntError>,
-) -> Option<T> {
-    // ) -> Result<Option<T>, std::num::ParseIntError> {
-    let unpositive = if let Some(unpositive) = scalar.strip_prefix('+') {
-        if unpositive.starts_with(['+', '-']) {
-            return None;
-        }
-        unpositive
-    } else {
-        scalar
-    };
-    if let Some(rest) = unpositive.strip_prefix("0x") {
-        if rest.starts_with(['+', '-']) {
-            return None;
-        }
-        // let int = from_str_radix(rest, 16)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(rest, 16) {
-            return Some(int);
-        }
-    }
-    if let Some(rest) = scalar.strip_prefix("-0x") {
-        let negative = format!("-{}", rest);
-        // let int = from_str_radix(&negative, 16)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(&negative, 16) {
-            return Some(int);
-        }
-    }
-    if let Some(rest) = unpositive.strip_prefix("0o") {
-        if rest.starts_with(['+', '-']) {
-            return None;
-        }
-        // let int = from_str_radix(rest, 8)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(rest, 8) {
-            return Some(int);
-        }
-    }
-    if let Some(rest) = scalar.strip_prefix("-0o") {
-        let negative = format!("-{}", rest);
-        // let int = from_str_radix(&negative, 8)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(&negative, 8) {
-            return Some(int);
-        }
-    }
-    if let Some(rest) = unpositive.strip_prefix("0b") {
-        if rest.starts_with(['+', '-']) {
-            return None;
-        }
-        // let int = from_str_radix(rest, 2)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(rest, 2) {
-            return Some(int);
-        }
-    }
-    if let Some(rest) = scalar.strip_prefix("-0b") {
-        let negative = format!("-{}", rest);
-        // let int = from_str_radix(&negative, 2)?;
-        // return Ok(Some(int));
-        if let Ok(int) = from_str_radix(&negative, 2) {
-            return Some(int);
-        }
-    }
-    if digits_but_not_number(scalar) {
-        return None;
-    }
-    from_str_radix(unpositive, 10).ok()
-    // let int = from_str_radix(unpositive, 10)?;
-    // return Ok(Some(int));
-}
+// #[inline]
+// fn parse_signed_int<T>(
+//     scalar: &str,
+//     from_str_radix: fn(&str, radix: u32) -> Result<T, std::num::ParseIntError>,
+// ) -> Option<T> {
+//     let unpositive = if let Some(unpositive) = scalar.strip_prefix('+') {
+//         if unpositive.starts_with(['+', '-']) {
+//             return None;
+//         }
+//         unpositive
+//     } else {
+//         scalar
+//     };
+//     if let Some(rest) = unpositive.strip_prefix("0x") {
+//         if rest.starts_with(['+', '-']) {
+//             return None;
+//         }
+//         // let int = from_str_radix(rest, 16)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(rest, 16) {
+//             return Some(int);
+//         }
+//     }
+//     if let Some(rest) = scalar.strip_prefix("-0x") {
+//         let negative = format!("-{}", rest);
+//         // let int = from_str_radix(&negative, 16)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(&negative, 16) {
+//             return Some(int);
+//         }
+//     }
+//     if let Some(rest) = unpositive.strip_prefix("0o") {
+//         if rest.starts_with(['+', '-']) {
+//             return None;
+//         }
+//         // let int = from_str_radix(rest, 8)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(rest, 8) {
+//             return Some(int);
+//         }
+//     }
+//     if let Some(rest) = scalar.strip_prefix("-0o") {
+//         let negative = format!("-{}", rest);
+//         // let int = from_str_radix(&negative, 8)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(&negative, 8) {
+//             return Some(int);
+//         }
+//     }
+//     if let Some(rest) = unpositive.strip_prefix("0b") {
+//         if rest.starts_with(['+', '-']) {
+//             return None;
+//         }
+//         // let int = from_str_radix(rest, 2)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(rest, 2) {
+//             return Some(int);
+//         }
+//     }
+//     if let Some(rest) = scalar.strip_prefix("-0b") {
+//         let negative = format!("-{}", rest);
+//         // let int = from_str_radix(&negative, 2)?;
+//         // return Ok(Some(int));
+//         if let Ok(int) = from_str_radix(&negative, 2) {
+//             return Some(int);
+//         }
+//     }
+//     if digits_but_not_number(scalar) {
+//         return None;
+//     }
+//     from_str_radix(unpositive, 10).ok()
+//     // let int = from_str_radix(unpositive, 10)?;
+//     // return Ok(Some(int));
+// }
 
 fn parse_negative_int<T>(
     scalar: &str,
@@ -683,7 +678,7 @@ impl Number {
 
 #[cfg(feature = "serde")]
 pub mod serde {
-    use super::{Number, N};
+    use super::{N, Number};
 
     pub(crate) fn unexpected(number: &Number) -> serde::de::Unexpected {
         match number.0 {
@@ -863,7 +858,7 @@ mod tests {
     #[test]
     fn test_is_i64() -> eyre::Result<()> {
         crate::tests::init();
-        let big = i64::MAX as u64 + 10;
+        // let big = i64::MAX as u64 + 10;
         let v: crate::SpannedValue = crate::from_str(indoc! {r#"
             a: 64
             b: 9223372036854775817
@@ -982,7 +977,7 @@ mod tests {
                 version: String,
                 value: String,
             }
-            let expected = Num {
+            let _expected = Num {
                 version: "1.10".to_string(),
                 value: "1.10".to_string(),
             };
@@ -1080,7 +1075,7 @@ mod tests {
             struct Num {
                 value: String,
             }
-            let expected = Num {
+            let _expected = Num {
                 value: "340282366920938463463374607431768211457".to_owned(),
             };
             // TODO: cannot deserialize float value into string

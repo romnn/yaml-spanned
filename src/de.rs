@@ -1,8 +1,8 @@
 use crate::error::SerdeError;
 use crate::spanned::Spanned;
 use crate::tag::TaggedValue;
-use crate::tag::{self, serde::TagStringVisitor};
-use crate::{number, Error, Mapping, Sequence, Value};
+use crate::tag::serde::TagStringVisitor;
+use crate::{Mapping, Sequence, Value, number};
 use serde::de::value::{BorrowedStrDeserializer, StrDeserializer};
 use serde::de::{
     self, Deserialize, DeserializeSeed, Deserializer, EnumAccess, Error as _, Expected, MapAccess,
@@ -1670,7 +1670,7 @@ mod tests {
             expected: string
         "};
 
-        let expected = Data {
+        let _expected = Data {
             expected: "string".to_owned(),
         };
 
@@ -1697,9 +1697,9 @@ mod tests {
     }
 
     #[ignore = "stateful deserialization not supported, as it requires deserializtion directly from YAML"]
+    #[allow(dead_code)]
     #[test]
     fn test_stateful() -> eyre::Result<()> {
-        use serde::de::DeserializeSeed;
         crate::tests::init();
 
         struct Seed(i64);
@@ -1732,7 +1732,7 @@ mod tests {
         }
 
         let cases = [("3", 5, 15), ("6", 7, 42), ("-5", 9, -45)];
-        for &(yaml, seed, expected) in &cases {
+        for &(yaml, _seed, _expected) in &cases {
             // let deserializer = crate::de::Deserializer::from_str(yaml);
             // let deserialized = Seed(seed).deserialize(deserializer)?;
             // sim_assert_eq!(expected, deserialized);
