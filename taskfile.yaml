@@ -19,13 +19,11 @@ tasks:
 
   check:
     desc: "check cargo workspace"
-    dir: "{{.ROOT_DIR}}"
     cmds:
       - cargo check --workspace --all-targets {{.CLI_ARGS}}
 
   check:fc:
     desc: "check cargo workspace"
-    dir: "{{.ROOT_DIR}}"
     cmds:
       - cargo fc check --workspace --all-targets {{.CLI_ARGS}}
 
@@ -78,17 +76,17 @@ tasks:
       # prettier-ignore
       - >-
         cargo clippy
-        --tests --benches --examples --all-features
+        --all-targets --all-features
         {{.CLI_ARGS}}
         -- -Dclippy::all -Dclippy::pedantic
 
   lint:fc:
-    desc: "lint cargo workspace for feature combinations"
+    desc: "lint cargo workspace for all combinations of features"
     cmds:
       # prettier-ignore
       - >-
         cargo fc clippy
-        --tests --benches --examples --all-features
+        --all-targets --all-features
         {{.CLI_ARGS}}
         -- -Dclippy::all -Dclippy::pedantic
 

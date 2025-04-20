@@ -28,7 +28,7 @@ default = ["serde"]
 serde = ["dep:serde"]
 
 [package.metadata.cargo-feature-combinations]
-denylist = ["default"]
+exclude_features = ["default"]
 
 [dependencies]
 thiserror = "2"
