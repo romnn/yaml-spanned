@@ -72,7 +72,7 @@ pub mod value {
     /// Serializer whose output is a `Value`.
     ///
     /// This is the serializer that backs [`yaml_spanned::to_value`][crate::to_value].
-    /// Unlike the main yaml_spanned serializer which goes from some serializable
+    /// Unlike the main `yaml_spanned` serializer which goes from some serializable
     /// value of type `T` to YAML text, this one goes from `T` to
     /// `yaml_spanned::Value`.
     ///
@@ -895,6 +895,7 @@ pub mod value {
 }
 
 #[cfg(test)]
+#[allow(clippy::items_after_statements)]
 mod tests {
     use crate::{Mapping, Sequence, SpannedValue, TaggedValue, Value};
     use color_eyre::eyre;
@@ -1008,7 +1009,7 @@ mod tests {
             - 3
         "};
         let value = [1, 2, 3].into_iter().map(Value::from).collect();
-        test_serde::<Vec<usize>>(&yaml, value)?;
+        test_serde::<Vec<usize>>(yaml, value)?;
         Ok(())
     }
 
@@ -1027,7 +1028,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        test_serde::<BTreeMap<String, usize>>(&yaml, Value::from(value))?;
+        test_serde::<BTreeMap<String, usize>>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1058,7 +1059,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        test_serde::<Basic>(&yaml, Value::from(value))?;
+        test_serde::<Basic>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1069,25 +1070,25 @@ mod tests {
         let yaml = indoc! {"
             ascii
         "};
-        test_serde::<String>(&yaml, Value::from("ascii"))?;
+        test_serde::<String>(yaml, Value::from("ascii"))?;
 
         let yaml = indoc! {r#"
             "\0\a\b\t\n\v\f\r\e\"\\\N\L\P"
         "#};
         test_serde::<String>(
-            &yaml,
+            yaml,
             Value::from("\0\u{7}\u{8}\t\n\u{b}\u{c}\r\u{1b}\"\\\u{85}\u{2028}\u{2029}"),
         )?;
 
         let yaml = indoc! {r#"
             "\x1F\uFEFF"
         "#};
-        test_serde::<String>(&yaml, Value::from("\u{1f}\u{feff}"))?;
+        test_serde::<String>(yaml, Value::from("\u{1f}\u{feff}"))?;
 
         let yaml = indoc! {"
             🎉
         "};
-        test_serde::<String>(&yaml, Value::from("\u{1f389}"))?;
+        test_serde::<String>(yaml, Value::from("\u{1f389}"))?;
         Ok(())
     }
 
@@ -1124,7 +1125,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        test_serde::<Struct>(&yaml, Value::from(value))?;
+        test_serde::<Struct>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1162,7 +1163,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        test_serde::<Struct>(&yaml, Value::from(value))?;
+        test_serde::<Struct>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1195,7 +1196,7 @@ mod tests {
         .into_iter()
         .map(SpannedValue::from)
         .collect();
-        test_serde::<Vec<Vec<usize>>>(&yaml, Value::from(value))?;
+        test_serde::<Vec<Vec<usize>>>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1225,7 +1226,7 @@ mod tests {
                 SpannedValue::from(512),
             )])),
         )]);
-        test_serde::<Outer>(&yaml, Value::from(value))?;
+        test_serde::<Outer>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1245,7 +1246,7 @@ mod tests {
             !Inner Unit
         "};
         let value = TaggedValue::new("!Inner", "Unit");
-        test_serde::<Outer>(&yaml, Value::from(value))?;
+        test_serde::<Outer>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1262,7 +1263,7 @@ mod tests {
             SpannedValue::from(Value::Null),
             SpannedValue::from(3),
         ]);
-        test_serde::<Vec<Option<usize>>>(&yaml, Value::from(value))?;
+        test_serde::<Vec<Option<usize>>>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1279,7 +1280,7 @@ mod tests {
             SpannedValue::from(Value::Null),
             SpannedValue::from(Value::Null),
         ]);
-        test_serde::<Vec<()>>(&yaml, Value::from(value))?;
+        test_serde::<Vec<()>>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1292,7 +1293,7 @@ mod tests {
         let yaml = indoc! {"
             null
         "};
-        test_serde::<Foo>(&yaml, Value::Null)?;
+        test_serde::<Foo>(yaml, Value::Null)?;
         Ok(())
     }
 
@@ -1309,7 +1310,7 @@ mod tests {
             First
         "};
         let value = Value::from("First");
-        test_serde::<Variant>(&yaml, value)?;
+        test_serde::<Variant>(yaml, value)?;
         Ok(())
     }
 
@@ -1329,7 +1330,7 @@ mod tests {
             v: 1
         "};
         let value = Mapping::from_iter([(SpannedValue::from("v"), SpannedValue::from(1))]);
-        test_serde::<NewType>(&yaml, Value::from(value))?;
+        test_serde::<NewType>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1346,7 +1347,7 @@ mod tests {
             !Size 127
         "};
         let value = TaggedValue::new("!Size", 127);
-        test_serde::<Variant>(&yaml, Value::from(value))?;
+        test_serde::<Variant>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1373,7 +1374,7 @@ mod tests {
                 SpannedValue::from(96),
             ]),
         );
-        test_serde::<Variant>(&yaml, Value::from(value))?;
+        test_serde::<Variant>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1399,7 +1400,7 @@ mod tests {
                 (SpannedValue::from("b"), SpannedValue::from(96)),
             ]),
         );
-        test_serde::<Variant>(&yaml, Value::from(value))?;
+        test_serde::<Variant>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1434,7 +1435,7 @@ mod tests {
                 )]),
             )),
         )]);
-        test_serde::<Bindings>(&yaml, Value::from(value))?;
+        test_serde::<Bindings>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1483,7 +1484,7 @@ mod tests {
                 ])),
             ),
         ]);
-        test_serde::<GenericInstructions>(&yaml, Value::from(value))?;
+        test_serde::<GenericInstructions>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1519,7 +1520,7 @@ mod tests {
                 (SpannedValue::from("b"), SpannedValue::from("bar")),
             ])),
         )]);
-        test_serde::<Data>(&yaml, Value::from(value))?;
+        test_serde::<Data>(yaml, Value::from(value))?;
         Ok(())
     }
 
@@ -1550,7 +1551,7 @@ mod tests {
                     .collect::<String>(),
             ),
         )]);
-        test_serde::<Data>(&yaml, Value::from(value))?;
+        test_serde::<Data>(yaml, Value::from(value))?;
         Ok(())
     }
 }

@@ -506,7 +506,7 @@ struct EnumDeserializer<'a> {
     value: Option<Value>,
 }
 
-impl<'a, 'de> EnumAccess<'de> for EnumDeserializer<'a> {
+impl<'de> EnumAccess<'de> for EnumDeserializer<'_> {
     type Error = SerdeError;
     type Variant = VariantDeserializer;
 
@@ -1560,7 +1560,7 @@ mod tests {
               - 0
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value = Mapping::from_iter([
             (
                 "struc".into(), // spellcheck:ignore-line
@@ -1711,7 +1711,7 @@ mod tests {
                 D: serde::de::Deserializer<'de>,
             {
                 struct Visitor(i64);
-                impl<'de> serde::de::Visitor<'de> for Visitor {
+                impl serde::de::Visitor<'_> for Visitor {
                     type Value = i64;
 
                     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

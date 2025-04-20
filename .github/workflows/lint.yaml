@@ -55,7 +55,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: Homebrew/actions/setup-homebrew@master
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install cargo-outdated
+      - run: brew install cargo-outdated
       - name: Check for outdated dependencies
         run: task outdated
 

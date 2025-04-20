@@ -99,6 +99,7 @@ impl Default for Value {
 }
 
 impl Value {
+    #[must_use]
     pub fn kind(&self) -> Kind {
         match self {
             Self::Null => Kind::Null,
@@ -111,6 +112,7 @@ impl Value {
         }
     }
 
+    #[must_use]
     pub fn cleared_spans(mut self) -> Self {
         self.clear_spans();
         self
@@ -138,6 +140,7 @@ impl Value {
 }
 
 impl Spanned<Value> {
+    #[must_use]
     pub fn cleared_spans(mut self) -> Self {
         self.clear_spans();
         self
@@ -151,11 +154,13 @@ impl Spanned<Value> {
 }
 impl Value {
     #[inline]
+    #[must_use]
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
 
     #[inline]
+    #[must_use]
     pub fn is_sequence(&self) -> bool {
         self.as_sequence().is_some()
     }
@@ -169,6 +174,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_sequence(&self) -> Option<&Sequence> {
         match self {
             Self::Sequence(sequence) => Some(sequence),
@@ -177,6 +183,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_mapping(&self) -> bool {
         self.as_mapping().is_some()
     }
@@ -190,6 +197,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_mapping(&self) -> Option<&Mapping> {
         match self {
             Self::Mapping(mapping) => Some(mapping),
@@ -216,6 +224,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_bool(&self) -> bool {
         self.as_bool().is_some()
     }
@@ -229,6 +238,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_bool(&self) -> Option<bool> {
         match self {
             Self::Bool(boolean) => Some(*boolean),
@@ -237,6 +247,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_u64(&self) -> bool {
         self.as_u64().is_some()
     }
@@ -250,6 +261,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_u64(&self) -> Option<u64> {
         match self {
             Self::Number(number) => number.as_u64(),
@@ -258,6 +270,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_i64(&self) -> bool {
         self.as_i64().is_some()
     }
@@ -271,6 +284,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_i64(&self) -> Option<i64> {
         match self {
             Self::Number(number) => number.as_i64(),
@@ -279,6 +293,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_f64(&self) -> bool {
         // NOTE: cannot use `as_f64().is_some()`, as_f64 will cast integers to floating points numbers
         match self {
@@ -296,6 +311,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_f64(&self) -> Option<f64> {
         match self {
             Self::Number(number) => number.as_f64(),
@@ -304,6 +320,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_str(&self) -> bool {
         self.as_str().is_some()
     }
@@ -317,6 +334,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_str(&self) -> Option<&str> {
         match self {
             Self::String(scalar) => Some(scalar.as_str()),
@@ -325,6 +343,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn is_string(&self) -> bool {
         self.as_string().is_some()
     }
@@ -338,6 +357,7 @@ impl Value {
     }
 
     #[inline]
+    #[must_use]
     pub fn as_string(&self) -> Option<&String> {
         match self {
             Self::String(scalar) => Some(scalar),
@@ -380,7 +400,7 @@ impl Value {
                     match mapping.remove("<<").map(Spanned::into_inner) {
                         Some(Value::Mapping(merge)) => {
                             for (k, v) in merge {
-                                mapping.entry(k).or_insert(v);
+                                _ = mapping.entry(k).or_insert(v);
                             }
                         }
                         Some(Value::Sequence(sequence)) => {
@@ -388,7 +408,7 @@ impl Value {
                                 match value.into_inner() {
                                     Value::Mapping(merge) => {
                                         for (k, v) in merge {
-                                            mapping.entry(k).or_insert(v);
+                                            _ = mapping.entry(k).or_insert(v);
                                         }
                                     }
                                     Value::Sequence(_) => {
@@ -447,7 +467,7 @@ impl std::fmt::Display for Value {
             Self::Number(number) => write!(f, "Number({number})"),
             Self::Sequence(sequence) => f
                 .debug_list()
-                .entries(sequence.iter().map(|item| crate::fmt::Display(item)))
+                .entries(sequence.iter().map(crate::fmt::Display))
                 .finish(),
             Self::Mapping(mapping) => std::fmt::Display::fmt(mapping, f),
             Self::Tagged(tagged) => std::fmt::Display::fmt(tagged, f),
@@ -457,13 +477,13 @@ impl std::fmt::Display for Value {
 
 pub struct StringValueRepr<'a>(&'a Value);
 
-impl<'a> std::fmt::Debug for StringValueRepr<'a> {
+impl std::fmt::Debug for StringValueRepr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self, f)
     }
 }
 
-impl<'a> std::fmt::Display for StringValueRepr<'a> {
+impl std::fmt::Display for StringValueRepr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             Value::Null => write!(f, "NULL"),
@@ -481,6 +501,7 @@ impl<'a> std::fmt::Display for StringValueRepr<'a> {
 }
 
 impl Value {
+    #[must_use]
     pub fn string_value_repr(&self) -> StringValueRepr<'_> {
         StringValueRepr(self)
     }
@@ -527,10 +548,10 @@ impl TryFrom<(libyaml_safer::Mark, libyaml_safer::Mark)> for crate::spanned::Spa
 }
 
 trait ToValue {
-    fn to_value<'doc>(
+    fn to_value(
         &self,
         path: &str,
-        document: &'doc libyaml_safer::Document,
+        document: &libyaml_safer::Document,
         errors: &mut Vec<ParseError>,
         recursion_limit: usize,
         jump_limit: &mut usize,
@@ -606,15 +627,12 @@ fn scalar_node_to_value(
     // document: &libyaml_safer::Document,
     // errors: &mut Vec<ParseError>,
 ) -> Spanned<Value> {
-    match node.tag.as_deref() {
-        Some("tag:yaml.org,2002:int") => {
-            if let Some(number) = crate::number::parse_number(value) {
-                return Spanned::new(node.span(), Value::Number(number));
-            }
+    if let Some("tag:yaml.org,2002:int") = node.tag.as_deref() {
+        if let Some(number) = crate::number::parse_number(value) {
+            return Spanned::new(node.span(), Value::Number(number));
         }
-        _ => {
-            // autodetect
-        }
+    } else {
+        // autodetect
     }
     // let value = scalar_node_to_value_guess_type(node, path, value, style, document, errors);
     let value = scalar_node_to_value_guess_type(value, style);
@@ -685,7 +703,7 @@ fn mapping_node_to_value(
     }
     Ok(Spanned::new(
         node.span(),
-        Value::Mapping(Mapping(IndexMap::from_iter(entries.into_iter()))),
+        Value::Mapping(Mapping(IndexMap::from_iter(entries))),
     ))
 }
 
@@ -722,10 +740,10 @@ fn sequence_node_to_value(
 }
 
 impl ToValue for libyaml_safer::Node {
-    fn to_value<'doc>(
+    fn to_value(
         &self,
         path: &str,
-        document: &'doc libyaml_safer::Document,
+        document: &libyaml_safer::Document,
         errors: &mut Vec<ParseError>,
         recursion_limit: usize,
         jump_limit: &mut usize,
@@ -811,7 +829,7 @@ impl Builder {
         document: &mut libyaml_safer::Document,
         errors: &mut Vec<ParseError>,
     ) -> Result<Spanned<Value>, LimitExceeded> {
-        let Some(root_node) = document.nodes.get(0) else {
+        let Some(root_node) = document.nodes.first() else {
             return Ok(Spanned::new((&*document).span(), Value::Null));
         };
 
@@ -828,7 +846,7 @@ impl Builder {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::de::IntoDeserializer<'de, crate::error::SerdeError> for Value {
+impl serde::de::IntoDeserializer<'_, crate::error::SerdeError> for Value {
     type Deserializer = Self;
 
     fn into_deserializer(self) -> Self::Deserializer {
@@ -902,7 +920,7 @@ mod tests {
             - !Number 0
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         similar_asserts::assert_eq!(
             value.clone().cleared_spans().into_inner(),
             Value::from(Sequence::from_iter([
@@ -963,7 +981,7 @@ mod tests {
             - !String
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         sim_assert_eq!(
             value.clone().cleared_spans().into_inner(),
             Value::from(Sequence::from_iter([TaggedValue::new(
@@ -975,7 +993,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let _expected = vec![Enum::String(String::new())];
+            let _expected = [Enum::String(String::new())];
             // TODO: allow parsing empty string from Value::Null
             // sim_assert_eq!(crate::from_value::<Vec<Enum>>(value)?, expected);
         }
@@ -1001,7 +1019,7 @@ mod tests {
             b: *bref
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value = Mapping::from_iter([
             ("aref".into(), "A".into()),
             (
@@ -1073,7 +1091,7 @@ mod tests {
             f: *some_b
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value = Mapping::from_iter([
             ("none_f".into(), Value::Null.into()),
             ("none_s".into(), Value::Null.into()),
@@ -1125,7 +1143,7 @@ mod tests {
             c: true
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value =
             Mapping::from_iter([("b".into(), Value::Null.into()), ("c".into(), true.into())])
                 .into();
@@ -1162,7 +1180,7 @@ mod tests {
             third: 3
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value = Mapping::from_iter([
             ("first".into(), 1.into()),
             ("second".into(), 1.into()),
@@ -1196,7 +1214,7 @@ mod tests {
             - \"double quoted\"
         "};
 
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let expected: Value = Sequence::from_iter([
             "plain nonàscii".into(),
             "single quoted".into(),
@@ -1207,7 +1225,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let _expected = vec!["plain nonàscii", "single quoted", "double quoted"];
+            let _expected = ["plain nonàscii", "single quoted", "double quoted"];
             // TODO: cannot deserialize borrowed as we first allocate value
             // sim_assert_eq!(crate::from_value::<Vec<&str>>(value)?, expected);
         }
@@ -1471,7 +1489,7 @@ mod tests {
             1
         "};
 
-        let values: Vec<Value> = crate::from_str_all(&yaml)?
+        let values: Vec<Value> = crate::from_str_all(yaml)?
             .into_iter()
             .map(|doc| doc.cleared_spans().into_inner())
             .collect();

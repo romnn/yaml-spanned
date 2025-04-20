@@ -61,9 +61,9 @@ impl Number {
     /// ```
     #[inline]
     #[allow(clippy::cast_sign_loss)]
-    pub fn is_i64(&self) -> bool {
+    #[must_use] pub fn is_i64(&self) -> bool {
         match self.0 {
-            N::PosInt(v) => v <= i64::max_value() as u64,
+            N::PosInt(v) => i64::try_from(v).is_ok(),
             N::NegInt(_) => true,
             N::Float(_) => false,
         }
@@ -93,7 +93,7 @@ impl Number {
     /// # }
     /// ```
     #[inline]
-    pub fn is_u64(&self) -> bool {
+    #[must_use] pub fn is_u64(&self) -> bool {
         match self.0 {
             N::PosInt(_) => true,
             N::NegInt(_) | N::Float(_) => false,
@@ -125,7 +125,7 @@ impl Number {
     /// # }
     /// ```
     #[inline]
-    pub fn is_f64(&self) -> bool {
+    #[must_use] pub fn is_f64(&self) -> bool {
         match self.0 {
             N::Float(_) => true,
             N::PosInt(_) | N::NegInt(_) => false,
@@ -151,10 +151,10 @@ impl Number {
     /// # }
     /// ```
     #[inline]
-    pub fn as_i64(&self) -> Option<i64> {
+    #[must_use] pub fn as_i64(&self) -> Option<i64> {
         match self.0 {
             N::PosInt(n) => {
-                if n <= i64::max_value() as u64 {
+                if i64::try_from(n).is_ok() {
                     Some(n as i64)
                 } else {
                     None
@@ -191,7 +191,7 @@ impl Number {
     /// # }
     /// ```
     #[inline]
-    pub fn as_u64(&self) -> Option<u64> {
+    #[must_use] pub fn as_u64(&self) -> Option<u64> {
         match self.0 {
             N::PosInt(n) => Some(n),
             N::NegInt(_) | N::Float(_) => None,
@@ -237,7 +237,7 @@ impl Number {
     /// # }
     /// ```
     #[inline]
-    pub fn as_f64(&self) -> Option<f64> {
+    #[must_use] pub fn as_f64(&self) -> Option<f64> {
         match self.0 {
             N::PosInt(n) => Some(n as f64),
             N::NegInt(n) => Some(n as f64),
@@ -269,7 +269,7 @@ impl Number {
     /// assert!(!Number::from(1).is_nan());
     /// ```
     #[inline]
-    pub fn is_nan(&self) -> bool {
+    #[must_use] pub fn is_nan(&self) -> bool {
         match self.0 {
             N::PosInt(_) | N::NegInt(_) => false,
             N::Float(f) => f.is_nan(),
@@ -293,7 +293,7 @@ impl Number {
     /// assert!(!Number::from(1).is_infinite());
     /// ```
     #[inline]
-    pub fn is_infinite(&self) -> bool {
+    #[must_use] pub fn is_infinite(&self) -> bool {
         match self.0 {
             N::PosInt(_) | N::NegInt(_) => false,
             N::Float(f) => f.is_infinite(),
@@ -316,7 +316,7 @@ impl Number {
     /// assert!(Number::from(1).is_finite());
     /// ```
     #[inline]
-    pub fn is_finite(&self) -> bool {
+    #[must_use] pub fn is_finite(&self) -> bool {
         match self.0 {
             N::PosInt(_) | N::NegInt(_) => true,
             N::Float(f) => f.is_finite(),
@@ -481,7 +481,7 @@ fn parse_negative_int<T>(
     // ) -> Result<Option<T>, std::num::ParseIntError> {
 ) -> Option<T> {
     if let Some(rest) = scalar.strip_prefix("-0x") {
-        let negative = format!("-{}", rest);
+        let negative = format!("-{rest}");
         // let int = from_str_radix(&negative, 16)?;
         // return Ok(Some(int));
         if let Ok(int) = from_str_radix(&negative, 16) {
@@ -489,7 +489,7 @@ fn parse_negative_int<T>(
         }
     }
     if let Some(rest) = scalar.strip_prefix("-0o") {
-        let negative = format!("-{}", rest);
+        let negative = format!("-{rest}");
         // let int = from_str_radix(&negative, 8)?;
         // return Ok(Some(int));
         if let Ok(int) = from_str_radix(&negative, 8) {
@@ -497,7 +497,7 @@ fn parse_negative_int<T>(
         }
     }
     if let Some(rest) = scalar.strip_prefix("-0b") {
-        let negative = format!("-{}", rest);
+        let negative = format!("-{rest}");
         // let int = from_str_radix(&negative, 2)?;
         // return Ok(Some(int));
         if let Ok(int) = from_str_radix(&negative, 2) {
@@ -704,7 +704,7 @@ pub mod serde {
 
     struct NumberVisitor;
 
-    impl<'de> serde::de::Visitor<'de> for NumberVisitor {
+    impl serde::de::Visitor<'_> for NumberVisitor {
         type Value = Number;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -759,7 +759,7 @@ pub mod serde {
         }
     }
 
-    impl<'de, 'a> serde::Deserializer<'de> for &'a Number {
+    impl<'de> serde::Deserializer<'de> for &Number {
         type Error = crate::error::SerdeError;
 
         #[inline]
@@ -818,7 +818,7 @@ from_unsigned!(u8 u16 u32 u64 usize);
 
 impl From<f32> for Number {
     fn from(f: f32) -> Self {
-        Number::from(f as f64)
+        Number::from(f64::from(f))
     }
 }
 
@@ -859,11 +859,11 @@ mod tests {
     fn test_is_i64() -> eyre::Result<()> {
         crate::tests::init();
         // let big = i64::MAX as u64 + 10;
-        let v: crate::SpannedValue = crate::from_str(indoc! {r#"
+        let v: crate::SpannedValue = crate::from_str(indoc! {r"
             a: 64
             b: 9223372036854775817
             c: 256.0
-        "#})?;
+        "})?;
         sim_assert_eq!(v["a"].as_i64(), Some(64), "a is an integer");
         sim_assert_eq!(v["b"].as_i64(), None, "b is greater than i64");
         sim_assert_eq!(
@@ -1003,7 +1003,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let expected: u128 = u64::MAX as u128 + 1;
+            let expected: u128 = u128::from(u64::MAX) + 1;
 
             sim_assert_eq!(
                 crate::from_value::<u128>(crate::from_str(yaml)?.as_ref())?,
@@ -1030,7 +1030,7 @@ mod tests {
 
         #[cfg(feature = "serde")]
         {
-            let expected: i128 = i64::MIN as i128 - 1;
+            let expected: i128 = i128::from(i64::MIN) - 1;
             sim_assert_eq!(
                 crate::from_value::<i128>(crate::from_str(yaml)?.as_ref())?,
                 expected

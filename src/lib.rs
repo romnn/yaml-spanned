@@ -37,11 +37,11 @@ impl<'a> LossyDocumentDeserializer<'a> {
         parser.set_input_string(value);
 
         let builder = Builder::default();
-        Self { parser, builder }
+        Self { builder, parser }
     }
 }
 
-impl<'a> std::iter::Iterator for LossyDocumentDeserializer<'a> {
+impl std::iter::Iterator for LossyDocumentDeserializer<'_> {
     type Item = Result<(Spanned<Value>, Vec<ParseError>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -81,7 +81,7 @@ pub fn from_str_lossy_all(value: &str) -> Result<Vec<(Spanned<Value>, Vec<ParseE
             Err(err) => return Err(err.into()),
         };
         let value: Spanned<Value> = builder.from_document(&mut document, &mut errors)?;
-        documents.push((value, errors))
+        documents.push((value, errors));
     }
 
     Ok(documents)
@@ -175,7 +175,7 @@ mod private {
     impl Sealed for String {}
     impl Sealed for crate::value::Value {}
     impl Sealed for crate::spanned::Spanned<crate::value::Value> {}
-    impl<'a, T> Sealed for &'a T where T: ?Sized + Sealed {}
+    impl<T> Sealed for &T where T: ?Sized + Sealed {}
 }
 
 #[cfg(test)]

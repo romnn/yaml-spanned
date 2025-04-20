@@ -1,15 +1,13 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 tasks:
-  default:
-    cmds:
-      - task: run
-
   build:
+    desc: "build in debug mode"
     cmds:
       - cargo build --all-targets {{.CLI_ARGS}}
 
   build:release:
+    desc: "build in release mode"
     cmds:
       - cargo build --all-targets --release {{.CLI_ARGS}}
 
@@ -32,6 +30,7 @@ tasks:
       - cargo fc check --workspace --all-targets {{.CLI_ARGS}}
 
   clean:
+    desc: "clean cargo workspace"
     cmds:
       - cargo clean {{.CLI_ARGS}}
 
@@ -101,7 +100,7 @@ tasks:
       - >-
         cargo clippy
         --fix --allow-dirty --allow-staged
-        --tests --benches --examples --all-features
+        --all-targets --all-features
         {{.CLI_ARGS}}
         -- -Dclippy::all -Dclippy::pedantic
 

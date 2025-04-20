@@ -226,7 +226,7 @@ pub mod serde {
             use serde::ser::SerializeMap;
             struct SerializeTag<'a>(&'a Tag);
 
-            impl<'a> serde::Serialize for SerializeTag<'a> {
+            impl serde::Serialize for SerializeTag<'_> {
                 fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                 where
                     S: serde::Serializer,
@@ -458,7 +458,7 @@ pub mod serde {
 
     pub(crate) struct TagStringVisitor;
 
-    impl<'de> serde::de::Visitor<'de> for TagStringVisitor {
+    impl serde::de::Visitor<'_> for TagStringVisitor {
         type Value = Tag;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -540,7 +540,7 @@ pub mod serde {
         }
 
         let mut check_for_tag = CheckForTag::Empty;
-        std::fmt::write(&mut check_for_tag, format_args!("{}", value)).unwrap();
+        std::fmt::write(&mut check_for_tag, format_args!("{value}")).unwrap();
         match check_for_tag {
             CheckForTag::Empty => MaybeTag::NotTag(String::new()),
             CheckForTag::Bang => MaybeTag::NotTag("!".to_owned()),

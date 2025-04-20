@@ -72,13 +72,13 @@ impl From<String> for Value {
     }
 }
 
-impl<'a> From<&'a str> for Spanned<Value> {
+impl From<&str> for Spanned<Value> {
     fn from(f: &str) -> Spanned<Value> {
         Spanned::from(Value::from(f))
     }
 }
 
-impl<'a> From<&'a str> for Value {
+impl From<&str> for Value {
     /// Convert string slice to `Value`
     ///
     /// # Examples

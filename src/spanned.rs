@@ -19,7 +19,7 @@ impl<'de, T: serde::Deserialize<'de>> serde::Deserialize<'de> for Spanned<T> {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::de::IntoDeserializer<'de, crate::error::SerdeError> for Spanned<Value> {
+impl serde::de::IntoDeserializer<'_, crate::error::SerdeError> for Spanned<Value> {
     type Deserializer = Value;
 
     fn into_deserializer(self) -> Self::Deserializer {
@@ -27,9 +27,9 @@ impl<'de> serde::de::IntoDeserializer<'de, crate::error::SerdeError> for Spanned
     }
 }
 
-impl Into<Value> for Spanned<Value> {
-    fn into(self: Spanned<Value>) -> Value {
-        self.into_inner()
+impl From<Spanned<Value>> for Value {
+    fn from(val: Spanned<Value>) -> Self {
+        val.into_inner()
     }
 }
 
@@ -133,7 +133,7 @@ where
     T: PartialOrd,
 {
     fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
-        PartialOrd::partial_cmp(&self.inner, &other)
+        PartialOrd::partial_cmp(&self.inner, other)
     }
 }
 

@@ -4,7 +4,7 @@ use indexmap::IndexMap;
 use std::cmp::Ordering;
 
 struct Key<'a>(&'a Spanned<Value>);
-impl<'a> std::fmt::Debug for Key<'a> {
+impl std::fmt::Debug for Key<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0.as_ref() {
             Value::Null => write!(f, "NULL"),
@@ -31,13 +31,13 @@ impl std::fmt::Display for Mapping {
 
 pub struct StringValueRepr<'a>(&'a Mapping);
 
-impl<'a> std::fmt::Debug for StringValueRepr<'a> {
+impl std::fmt::Debug for StringValueRepr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self, f)
     }
 }
 
-impl<'a> std::fmt::Display for StringValueRepr<'a> {
+impl std::fmt::Display for StringValueRepr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_map()
             .entries(self.0.iter().map(|(k, v)| (Key(k), v.string_value_repr())))
@@ -46,6 +46,7 @@ impl<'a> std::fmt::Display for StringValueRepr<'a> {
 }
 
 impl Mapping {
+    #[must_use]
     pub fn string_value_repr(&self) -> StringValueRepr<'_> {
         StringValueRepr(self)
     }
@@ -70,12 +71,14 @@ impl AsRef<IndexMap<Spanned<Value>, Spanned<Value>>> for Mapping {
 impl Mapping {
     /// Creates an empty YAML map.
     #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Creates an empty YAML map with the given initial capacity.
     #[inline]
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self(IndexMap::with_capacity(capacity))
     }
@@ -216,18 +219,21 @@ impl Mapping {
     /// Returns the maximum number of key-value pairs the map can hold without
     /// reallocating.
     #[inline]
+    #[must_use]
     pub fn capacity(&self) -> usize {
         self.0.capacity()
     }
 
     /// Returns the number of key-value pairs in the map.
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     /// Returns whether the map is currently empty.
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -241,6 +247,7 @@ impl Mapping {
     /// Returns a double-ended iterator visiting all key-value pairs in order of
     /// insertion. Iterator element type is `(&'a Value, &'a Value)`.
     #[inline]
+    #[must_use]
     pub fn iter(&self) -> Iter {
         Iter {
             iter: self.0.iter(),
@@ -257,6 +264,7 @@ impl Mapping {
     }
 
     /// Return an iterator over the keys of the map.
+    #[must_use]
     pub fn keys(&self) -> Keys {
         Keys {
             iter: self.0.keys(),
@@ -264,6 +272,7 @@ impl Mapping {
     }
 
     /// Return an owning iterator over the keys of the map.
+    #[must_use]
     pub fn into_keys(self) -> IntoKeys {
         IntoKeys {
             iter: self.0.into_keys(),
@@ -271,6 +280,7 @@ impl Mapping {
     }
 
     /// Return an iterator over the values of the map.
+    #[must_use]
     pub fn values(&self) -> Values {
         Values {
             iter: self.0.values(),
@@ -285,6 +295,7 @@ impl Mapping {
     }
 
     /// Return an owning iterator over the values of the map.
+    #[must_use]
     pub fn into_values(self) -> IntoValues {
         IntoValues {
             iter: self.0.into_values(),
@@ -321,7 +332,7 @@ pub trait Index: crate::private::Sealed {
 
 struct HashLikeValue<'a>(&'a str);
 
-impl<'a> indexmap::Equivalent<Spanned<Value>> for HashLikeValue<'a> {
+impl indexmap::Equivalent<Spanned<Value>> for HashLikeValue<'_> {
     fn equivalent(&self, key: &Spanned<Value>) -> bool {
         match key.as_ref() {
             Value::String(string) => self.0 == string,
@@ -330,7 +341,7 @@ impl<'a> indexmap::Equivalent<Spanned<Value>> for HashLikeValue<'a> {
     }
 }
 
-impl<'a> indexmap::Equivalent<Value> for HashLikeValue<'a> {
+impl indexmap::Equivalent<Value> for HashLikeValue<'_> {
     fn equivalent(&self, key: &Value) -> bool {
         match key {
             Value::String(string) => self.0 == string,
@@ -340,7 +351,7 @@ impl<'a> indexmap::Equivalent<Value> for HashLikeValue<'a> {
 }
 
 // NOTE: This impl must be consistent with Value's Hash impl.
-impl<'a> std::hash::Hash for HashLikeValue<'a> {
+impl std::hash::Hash for HashLikeValue<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         const STRING: Value = Value::String(String::new());
         std::mem::discriminant(&STRING).hash(state);
@@ -477,7 +488,7 @@ impl std::hash::Hash for Mapping {
         use std::hash::Hasher;
         // Hash the kv pairs in a way that is not sensitive to their order.
         let mut xor = 0;
-        for (k, v) in self.0.iter() {
+        for (k, v) in &self.0 {
             let mut hasher = std::collections::hash_map::DefaultHasher::new();
             k.hash(&mut hasher);
             v.hash(&mut hasher);
@@ -547,9 +558,8 @@ impl PartialOrd for Mapping {
                     None => {
                         if other.next().is_none() {
                             return Ordering::Equal;
-                        } else {
-                            return Ordering::Less;
                         }
+                        return Ordering::Less;
                     }
                     Some(val) => val,
                 };
@@ -751,6 +761,7 @@ pub struct VacantEntry<'a> {
 
 impl<'a> Entry<'a> {
     /// Returns a reference to this entry's key.
+    #[must_use]
     pub fn key(&self) -> &Spanned<Value> {
         match self {
             Entry::Vacant(e) => e.key(),
@@ -760,6 +771,7 @@ impl<'a> Entry<'a> {
 
     /// Ensures a value is in the entry by inserting the default if empty, and
     /// returns a mutable reference to the value in the entry.
+    #[must_use]
     pub fn or_insert(self, default: Spanned<Value>) -> &'a mut Spanned<Value> {
         match self {
             Entry::Vacant(entry) => entry.insert(default),
@@ -799,12 +811,14 @@ impl<'a> Entry<'a> {
 impl<'a> OccupiedEntry<'a> {
     /// Gets a reference to the key in the entry.
     #[inline]
+    #[must_use]
     pub fn key(&self) -> &Spanned<Value> {
         self.occupied.key()
     }
 
     /// Gets a reference to the value in the entry.
     #[inline]
+    #[must_use]
     pub fn get(&self) -> &Spanned<Value> {
         self.occupied.get()
     }
@@ -817,6 +831,7 @@ impl<'a> OccupiedEntry<'a> {
 
     /// Converts the entry into a mutable reference to its value.
     #[inline]
+    #[must_use]
     pub fn into_mut(self) -> &'a mut Spanned<Value> {
         self.occupied.into_mut()
     }
@@ -830,12 +845,14 @@ impl<'a> OccupiedEntry<'a> {
 
     /// Takes the value of the entry out of the map, and returns it.
     #[inline]
+    #[must_use]
     pub fn remove(self) -> Spanned<Value> {
         self.occupied.swap_remove()
     }
 
     /// Remove and return the key, value pair stored in the map for this entry.
     #[inline]
+    #[must_use]
     pub fn remove_entry(self) -> (Spanned<Value>, Spanned<Value>) {
         self.occupied.swap_remove_entry()
     }
@@ -843,21 +860,24 @@ impl<'a> OccupiedEntry<'a> {
 
 impl<'a> VacantEntry<'a> {
     /// Gets a reference to the key that would be used when inserting a value
-    /// through the VacantEntry.
+    /// through the `VacantEntry`.
     #[inline]
+    #[must_use]
     pub fn key(&self) -> &Spanned<Value> {
         self.vacant.key()
     }
 
     /// Takes ownership of the key, leaving the entry vacant.
     #[inline]
+    #[must_use]
     pub fn into_key(self) -> Spanned<Value> {
         self.vacant.into_key()
     }
 
-    /// Sets the value of the entry with the VacantEntry's key, and returns a
+    /// Sets the value of the entry with the `VacantEntry`'s key, and returns a
     /// mutable reference to it.
     #[inline]
+    #[must_use]
     pub fn insert(self, value: Spanned<Value>) -> &'a mut Spanned<Value> {
         self.vacant.insert(value)
     }
@@ -917,7 +937,7 @@ impl<'de> serde::Deserialize<'de> for Mapping {
                             // let value: Value = data.next_value()?;
                             let value = data.next_value()?;
                             // entry.insert(Spanned::dummy(value));
-                            entry.insert(value);
+                            _ = entry.insert(value);
                         }
                     }
                 }
@@ -934,14 +954,14 @@ struct DuplicateKeyError<'a> {
     entry: OccupiedEntry<'a>,
 }
 
-impl<'a> std::fmt::Display for DuplicateKeyError<'a> {
+impl std::fmt::Display for DuplicateKeyError<'_> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str("duplicate entry ")?;
         match self.entry.key().as_ref() {
             Value::Null => formatter.write_str("with null key"),
-            Value::Bool(boolean) => write!(formatter, "with key `{}`", boolean),
-            Value::Number(number) => write!(formatter, "with key {}", number),
-            Value::String(string) => write!(formatter, "with key {:?}", string),
+            Value::Bool(boolean) => write!(formatter, "with key `{boolean}`"),
+            Value::Number(number) => write!(formatter, "with key {number}"),
+            Value::String(string) => write!(formatter, "with key {string:?}"),
             Value::Sequence(_) | Value::Mapping(_) | Value::Tagged(_) => {
                 formatter.write_str("in YAML map")
             }

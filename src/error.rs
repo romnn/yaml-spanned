@@ -52,7 +52,7 @@ impl ToDiagnostics for DuplicateKeyError {
             if self.occurrences.len() > 2 {
                 format!(" (duplicated {} more time)", self.occurrences.len() - 2)
             } else {
-                "".to_string()
+                String::new()
             },
         ));
 
@@ -173,13 +173,13 @@ impl ToDiagnostics for libyaml_safer::Error {
             self.context_mark()
                 .and_then(|mark| mark.index.try_into().ok()),
         ) {
-            labels.push(Label::secondary(file_id.clone(), index..index).with_message(context))
+            labels.push(Label::secondary(file_id, index..index).with_message(context));
         }
         if let Some(index) = self
             .problem_mark()
             .and_then(|mark| mark.index.try_into().ok())
         {
-            labels.push(Label::primary(file_id.clone(), index..index).with_message(self.problem()))
+            labels.push(Label::primary(file_id, index..index).with_message(self.problem()));
         }
 
         vec![
@@ -395,7 +395,7 @@ mod tests {
             }
 
             // let expected = "missing field `w` at line 2 column 1";
-            let expected = r#"missing field `w`"#;
+            let expected = r"missing field `w`";
             sim_assert_eq!(
                 crate::from_value::<Basic>(&value).unwrap_err().to_string(),
                 expected
@@ -473,7 +473,7 @@ mod tests {
         // second document
         let second_document = documents.next().unwrap();
         // let expected = "did not find expected node content at line 4 column 1, while parsing a block node";
-        let expected = r#"Parser error: line 3 column 0: did not find expected node content while parsing a block node (line 3 column 0)"#;
+        let expected = r"Parser error: line 3 column 0: did not find expected node content while parsing a block node (line 3 column 0)";
         sim_assert_eq!(second_document.unwrap_err().to_string(), expected);
 
         Ok(())
@@ -531,7 +531,7 @@ mod tests {
             ---
             !Inner []
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<Outer>(&value).unwrap_err();
         // let expected = "deserializing nested enum in Outer::Inner from YAML is not supported yet at line 2 column 1";
         let expected = "invalid type: sequence, expected a Value::Tagged enum";
@@ -541,7 +541,7 @@ mod tests {
             ---
             !Variant []
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<Outer>(&value).unwrap_err();
         let expected = "unknown variant `Variant`, expected `Inner`";
         sim_assert_eq!(error.to_string(), expected);
@@ -551,7 +551,7 @@ mod tests {
             !Inner !Variant []
         "};
         // let expected = "deserializing nested enum in Outer::Inner from YAML is not supported yet at line 2 column 1";
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<Outer>(&value).unwrap_err();
         let expected = "invalid type: unit value, expected a Value::Tagged enum";
         sim_assert_eq!(error.to_string(), expected);
@@ -573,7 +573,7 @@ mod tests {
             !V
             value: 0
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<E>(&value).unwrap_err();
         let expected = "invalid type: map, expected usize";
         sim_assert_eq!(error.to_string(), expected);
@@ -595,7 +595,7 @@ mod tests {
         let yaml = indoc! {"
             [0, 0]
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<Struct>(&value).unwrap_err();
         let expected = "invalid type: sequence, expected struct Struct";
         sim_assert_eq!(error.to_string(), expected);
@@ -611,7 +611,7 @@ mod tests {
             ---
             !!bool str
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<bool>(&value).unwrap_err();
         let expected = r#"invalid type: string "str", expected a boolean"#;
         sim_assert_eq!(error.to_string(), expected);
@@ -627,7 +627,7 @@ mod tests {
             ---
             !!int str
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<i64>(&value).unwrap_err();
         let expected = r#"invalid type: string "str", expected i64"#;
         sim_assert_eq!(error.to_string(), expected);
@@ -643,7 +643,7 @@ mod tests {
             ---
             !!float str
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<f64>(&value).unwrap_err();
         let expected = r#"invalid type: string "str", expected f64"#;
         sim_assert_eq!(error.to_string(), expected);
@@ -659,7 +659,7 @@ mod tests {
             ---
             !!null str
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<()>(&value).unwrap_err();
         let expected = r#"invalid type: string "str", expected unit"#;
         sim_assert_eq!(error.to_string(), expected);
@@ -675,7 +675,7 @@ mod tests {
             ---
             [0, 0]
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<(u8, u8, u8)>(&value).unwrap_err();
         let expected = "invalid length 2, expected a tuple of size 3";
         sim_assert_eq!(error.to_string(), expected);
@@ -691,7 +691,7 @@ mod tests {
             ---
             [0, 0, 0]
         "};
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<(u8, u8)>(&value).unwrap_err();
         let expected = "invalid length 3, expected fewer elements in sequence";
         sim_assert_eq!(error.to_string(), expected);
@@ -710,7 +710,7 @@ mod tests {
         }
 
         let yaml = "x: ''\n";
-        let value = crate::from_str(&yaml)?;
+        let value = crate::from_str(yaml)?;
         let error = crate::from_value::<S>(&value).unwrap_err();
         let expected = r#"invalid type: string "", expected an array of length 1"#;
         sim_assert_eq!(error.to_string(), expected);
@@ -730,7 +730,7 @@ mod tests {
         // }
 
         let yaml = "&a {'x': *a}";
-        let error = crate::from_str(&yaml).unwrap_err();
+        let error = crate::from_str(yaml).unwrap_err();
         let expected = "recursion limit exceeded";
         sim_assert_eq!(error.to_string(), expected);
         // test_error::<S>(yaml, expected);
@@ -750,7 +750,7 @@ mod tests {
         // );
 
         let yaml = "&a [0, *a]";
-        let error = crate::from_str(&yaml).unwrap_err();
+        let error = crate::from_str(yaml).unwrap_err();
         let expected = "recursion limit exceeded";
         sim_assert_eq!(error.to_string(), expected);
         // test_error::<S>(yaml, expected);
@@ -767,7 +767,7 @@ mod tests {
         // pub struct S(#[allow(dead_code)] pub Option<Box<S>>);
 
         let yaml = "&a [*a]";
-        let error = crate::from_str(&yaml).unwrap_err();
+        let error = crate::from_str(yaml).unwrap_err();
         let expected = "recursion limit exceeded";
         sim_assert_eq!(error.to_string(), expected);
         // test_error::<S>(yaml, expected);
@@ -828,7 +828,7 @@ mod tests {
             h: &h [*g,*g,*g,*g,*g,*g,*g,*g,*g]
             i: &i [*h,*h,*h,*h,*h,*h,*h,*h,*h]
         "};
-        let error = crate::from_str(&yaml).unwrap_err();
+        let error = crate::from_str(yaml).unwrap_err();
         let expected = "repetition limit exceeded";
         sim_assert_eq!(error.to_string(), expected);
 
@@ -871,13 +871,13 @@ mod tests {
     }
 
     impl crate::error::Error {
-        pub fn errors(&self) -> Vec<String> {
+        #[must_use] pub fn errors(&self) -> Vec<String> {
             match self {
                 Self::YAML(err) => vec![err.to_string()],
                 #[cfg(feature = "serde")]
                 Self::Serde(err) => vec![err.to_string()],
                 Self::LimitExceeded(err) => vec![err.to_string()],
-                Self::Parse(errors) => errors.into_iter().map(|err| err.to_string()).collect(),
+                Self::Parse(errors) => errors.iter().map(std::string::ToString::to_string).collect(),
             }
         }
     }
@@ -891,8 +891,8 @@ mod tests {
             thing: true
             thing: false
         "};
-        let errors = crate::from_str(&yaml).unwrap_err().errors();
-        let expected = r#"duplicate key `.thing`"#;
+        let errors = crate::from_str(yaml).unwrap_err().errors();
+        let expected = r"duplicate key `.thing`";
         sim_assert_eq!(errors, vec![expected]);
 
         let yaml = indoc! {"
@@ -900,7 +900,7 @@ mod tests {
             null: true
             ~: false
         "};
-        let errors = crate::from_str(&yaml).unwrap_err().errors();
+        let errors = crate::from_str(yaml).unwrap_err().errors();
         let expected = "duplicate key `.NULL`";
         sim_assert_eq!(errors, vec![expected]);
 
@@ -909,7 +909,7 @@ mod tests {
             99: true
             99: false
         "};
-        let errors = crate::from_str(&yaml).unwrap_err().errors();
+        let errors = crate::from_str(yaml).unwrap_err().errors();
         let expected = "duplicate key `.99`";
         sim_assert_eq!(errors, vec![expected]);
 
@@ -918,7 +918,7 @@ mod tests {
             {}: true
             {}: false
         "};
-        let errors = crate::from_str(&yaml).unwrap_err().errors();
+        let errors = crate::from_str(yaml).unwrap_err().errors();
         let expected = "duplicate key `.{}`";
         sim_assert_eq!(errors, vec![expected]);
         Ok(())

@@ -1,6 +1,6 @@
 pub struct Display<'a, T>(pub &'a T);
 
-impl<'a, T> std::fmt::Debug for Display<'a, T>
+impl<T> std::fmt::Debug for Display<'_, T>
 where
     T: std::fmt::Display,
 {
