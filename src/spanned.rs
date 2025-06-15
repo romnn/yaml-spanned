@@ -7,6 +7,19 @@ pub struct Spanned<T> {
     pub inner: T,
 }
 
+impl<T> Spanned<T> {
+    pub fn map<F, U>(self, f: F) -> Spanned<U>
+    where
+        Self: Sized,
+        F: FnOnce(T) -> U,
+    {
+        Spanned {
+            span: self.span,
+            inner: f(self.inner),
+        }
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de, T: serde::Deserialize<'de>> serde::Deserialize<'de> for Spanned<T> {
     fn deserialize<D>(deserializer: D) -> Result<Spanned<T>, D::Error>
