@@ -131,7 +131,7 @@ impl Mapping {
     /// Gets the given key's corresponding entry in the map for insertion and/or
     /// in-place manipulation.
     #[inline]
-    pub fn entry(&mut self, k: Spanned<Value>) -> Entry {
+    pub fn entry(&mut self, k: Spanned<Value>) -> Entry<'_> {
         match self.0.entry(k) {
             indexmap::map::Entry::Occupied(occupied) => Entry::Occupied(OccupiedEntry { occupied }),
             indexmap::map::Entry::Vacant(vacant) => Entry::Vacant(VacantEntry { vacant }),
@@ -248,7 +248,7 @@ impl Mapping {
     /// insertion. Iterator element type is `(&'a Value, &'a Value)`.
     #[inline]
     #[must_use]
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             iter: self.0.iter(),
         }
@@ -257,7 +257,7 @@ impl Mapping {
     /// Returns a double-ended iterator visiting all key-value pairs in order of
     /// insertion. Iterator element type is `(&'a Value, &'a mut Value)`.
     #[inline]
-    pub fn iter_mut(&mut self) -> IterMut {
+    pub fn iter_mut(&mut self) -> IterMut<'_> {
         IterMut {
             iter: self.0.iter_mut(),
         }
@@ -265,7 +265,7 @@ impl Mapping {
 
     /// Return an iterator over the keys of the map.
     #[must_use]
-    pub fn keys(&self) -> Keys {
+    pub fn keys(&self) -> Keys<'_> {
         Keys {
             iter: self.0.keys(),
         }
@@ -281,14 +281,14 @@ impl Mapping {
 
     /// Return an iterator over the values of the map.
     #[must_use]
-    pub fn values(&self) -> Values {
+    pub fn values(&self) -> Values<'_> {
         Values {
             iter: self.0.values(),
         }
     }
 
     /// Return an iterator over mutable references to the values of the map.
-    pub fn values_mut(&mut self) -> ValuesMut {
+    pub fn values_mut(&mut self) -> ValuesMut<'_> {
         ValuesMut {
             iter: self.0.values_mut(),
         }

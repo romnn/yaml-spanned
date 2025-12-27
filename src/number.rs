@@ -537,11 +537,10 @@ pub(crate) fn parse_f64(scalar: &str) -> Option<f64> {
     // } else {
     //     Ok(None)
     // }
-    if let Ok(float) = unpositive.parse::<f64>() {
-        if float.is_finite() {
+    if let Ok(float) = unpositive.parse::<f64>()
+        && float.is_finite() {
             return Some(float);
         }
-    }
     None
 }
 
@@ -579,11 +578,10 @@ pub fn parse_number(value: &str) -> Option<Number> {
     if let Some(int) = parse_negative_int(value, i64::from_str_radix) {
         return Some(int.into());
     }
-    if !digits_but_not_number(value) {
-        if let Some(float) = parse_f64(value) {
+    if !digits_but_not_number(value)
+        && let Some(float) = parse_f64(value) {
             return Some(float.into());
         }
-    }
     None
 }
 
@@ -680,7 +678,7 @@ impl Number {
 pub mod serde {
     use super::{N, Number};
 
-    pub(crate) fn unexpected(number: &Number) -> serde::de::Unexpected {
+    pub(crate) fn unexpected(number: &Number) -> serde::de::Unexpected<'_> {
         match number.0 {
             N::PosInt(u) => serde::de::Unexpected::Unsigned(u),
             N::NegInt(i) => serde::de::Unexpected::Signed(i),

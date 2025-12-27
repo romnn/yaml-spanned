@@ -273,30 +273,6 @@ mod tests {
     use indoc::indoc;
     use similar_asserts::assert_eq as sim_assert_eq;
 
-    // #[test]
-    // fn test_error<'de, T>(yaml: &'de str, expected: &str)
-    // where
-    //     T: Deserialize<'de> + Debug,
-    // {
-    //     let result = serde_yaml::from_str::<T>(yaml);
-    //     assert_eq!(expected, result.unwrap_err().to_string());
-    //
-    //     let mut deserializer = Deserializer::from_str(yaml);
-    //     if let Some(first_document) = deserializer.next() {
-    //         if deserializer.next().is_none() {
-    //             let result = T::deserialize(first_document);
-    //             assert_eq!(expected, result.unwrap_err().to_string());
-    //         }
-    //     }
-    // }
-    //
-    // #[test]
-    // fn test_scan_error() {
-    //     let yaml = ">\n@";
-    //     let expected = "found character that cannot start any token at line 2 column 1, while scanning for the next token";
-    //     test_error::<Value>(yaml, expected);
-    // }
-    //
     #[test]
     fn test_incorrect_type() -> eyre::Result<()> {
         crate::tests::init();
@@ -310,8 +286,8 @@ mod tests {
         #[cfg(feature = "serde")]
         {
             sim_assert_eq!(
-                crate::from_value::<i16>(&value).unwrap_err().to_string(),
-                expected
+                have: crate::from_value::<i16>(&value).unwrap_err().to_string(),
+                want: expected
             );
         }
         Ok(())
@@ -355,10 +331,10 @@ mod tests {
                 expected
             );
             sim_assert_eq!(
-                serde_yaml::from_value::<A>(serde_yaml::from_str(yaml)?)
+                have: serde_yaml::from_value::<A>(serde_yaml::from_str(yaml)?)
                     .unwrap_err()
                     .to_string(),
-                expected
+                want: expected
             );
         }
         Ok(())
@@ -369,7 +345,7 @@ mod tests {
     fn test_empty() -> eyre::Result<()> {
         crate::tests::init();
         let expected = "EOF while parsing a value";
-        sim_assert_eq!(crate::from_str("").unwrap_err().to_string(), expected);
+        sim_assert_eq!(have: crate::from_str("").unwrap_err().to_string(), want: expected);
         Ok(())
     }
 
@@ -394,11 +370,10 @@ mod tests {
                 pub w: bool,
             }
 
-            // let expected = "missing field `w` at line 2 column 1";
             let expected = r"missing field `w`";
             sim_assert_eq!(
-                crate::from_value::<Basic>(&value).unwrap_err().to_string(),
-                expected
+                have: crate::from_value::<Basic>(&value).unwrap_err().to_string(),
+                want: expected
             );
         }
         Ok(())
@@ -413,9 +388,8 @@ mod tests {
             *some
         "};
 
-        // let expected = "unknown anchor at line 2 column 1";
-        let expected = "Composer error: line 1 column 0: found undefined alias";
-        sim_assert_eq!(crate::from_str(yaml).unwrap_err().to_string(), expected);
+        let expected = "Composer error: line 2 column 1: found undefined alias";
+        sim_assert_eq!(have: crate::from_str(yaml).unwrap_err().to_string(), want: expected);
         Ok(())
     }
 
@@ -427,10 +401,10 @@ mod tests {
             b: [*a]
             c: ~
         "};
+        dbg!(&yaml);
 
-        // let expected = "unknown anchor at line 1 column 5";
-        let expected = "Composer error: line 0 column 4: found undefined alias";
-        sim_assert_eq!(crate::from_str(yaml).unwrap_err().to_string(), expected);
+        let expected = "Composer error: line 1 column 5: found undefined alias";
+        sim_assert_eq!(have: crate::from_str(yaml).unwrap_err().to_string(), want: expected);
         Ok(())
     }
 
@@ -438,9 +412,8 @@ mod tests {
     fn test_bytes() -> eyre::Result<()> {
         crate::tests::init();
 
-        // let expected = "serialization and deserialization of bytes in YAML is not implemented";
-        let expected = "Parser error: line 0 column 0: did not find expected node content while parsing a block node (line 0 column 0)";
-        sim_assert_eq!(crate::from_str("...").unwrap_err().to_string(), expected);
+        let expected = "Parser error: line 1 column 1: did not find expected node content while parsing a block node (line 1 column 1)";
+        sim_assert_eq!(have: crate::from_str("...").unwrap_err().to_string(), want: expected);
 
         // sim_assert_eq!(
         //     crate::from_value::<Vec<u8>>(&value)
@@ -473,8 +446,8 @@ mod tests {
         // second document
         let second_document = documents.next().unwrap();
         // let expected = "did not find expected node content at line 4 column 1, while parsing a block node";
-        let expected = r"Parser error: line 3 column 0: did not find expected node content while parsing a block node (line 3 column 0)";
-        sim_assert_eq!(second_document.unwrap_err().to_string(), expected);
+        let expected = r"Parser error: line 4 column 1: did not find expected node content while parsing a block node (line 4 column 1)";
+        sim_assert_eq!(have: second_document.unwrap_err().to_string(), want: expected);
 
         Ok(())
     }
@@ -871,13 +844,17 @@ mod tests {
     }
 
     impl crate::error::Error {
-        #[must_use] pub fn errors(&self) -> Vec<String> {
+        #[must_use]
+        pub fn errors(&self) -> Vec<String> {
             match self {
                 Self::YAML(err) => vec![err.to_string()],
                 #[cfg(feature = "serde")]
                 Self::Serde(err) => vec![err.to_string()],
                 Self::LimitExceeded(err) => vec![err.to_string()],
-                Self::Parse(errors) => errors.iter().map(std::string::ToString::to_string).collect(),
+                Self::Parse(errors) => errors
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect(),
             }
         }
     }

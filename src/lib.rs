@@ -1,5 +1,3 @@
-// #![allow(warnings)]
-
 #[cfg(feature = "serde")]
 pub mod de;
 pub mod error;
@@ -26,13 +24,16 @@ pub use value::{Builder, Sequence, Value};
 
 pub type SpannedValue = Spanned<Value>;
 
-pub struct LossyDocumentDeserializer<'a> {
+pub struct LossyDocumentDeserializer<R> {
     builder: Builder,
-    parser: libyaml_safer::Parser<'a>,
+    parser: libyaml_safer::Parser<R>,
 }
 
-impl<'a> LossyDocumentDeserializer<'a> {
-    pub fn new(value: &'a mut &[u8]) -> Self {
+impl<'b, 'r> LossyDocumentDeserializer<&'b mut &'r [u8]>
+where
+    'b: 'r,
+{
+    pub fn new(value: &'b mut &'r [u8]) -> Self {
         let mut parser = libyaml_safer::Parser::new();
         parser.set_input_string(value);
 
@@ -41,7 +42,10 @@ impl<'a> LossyDocumentDeserializer<'a> {
     }
 }
 
-impl std::iter::Iterator for LossyDocumentDeserializer<'_> {
+impl<R> std::iter::Iterator for LossyDocumentDeserializer<R>
+where
+    R: std::io::BufRead,
+{
     type Item = Result<(Spanned<Value>, Vec<ParseError>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -60,7 +64,12 @@ impl std::iter::Iterator for LossyDocumentDeserializer<'_> {
     }
 }
 
-pub fn from_str_lossy_iter<'a>(value: &'a mut &[u8]) -> LossyDocumentDeserializer<'a> {
+pub fn from_str_lossy_iter<'b, 'r>(
+    value: &'b mut &'r [u8],
+) -> LossyDocumentDeserializer<&'b mut &'r [u8]>
+where
+    'b: 'r,
+{
     LossyDocumentDeserializer::new(value)
 }
 
